@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import gradio as gr
 import modules.scripts as scripts
@@ -37,15 +37,15 @@ register_callbacks()
 
 class Script(scripts.Script):
     def title(self):
-        return "UjiCache -Prototype"
+        return "UjiCache"
 
     def show(self, is_img2img):
         return scripts.AlwaysVisible
 
     def ui(self, is_img2img):
-        with gr.Accordion("UjiCache -Prototype", open=False, elem_id="ujicache-panel"):
+        with gr.Accordion("UjiCache", open=False, elem_id="ujicache-panel"):
             enabled = gr.Checkbox(
-                label="Enable UjiCache -Prototype",
+                label="Enable UjiCache",
                 value=_default_option("ujicache_enable", False),
                 elem_id="ujicache-enable",
             )
@@ -773,3 +773,4 @@ def _enable_parent_and_debug_if_child_enabled(child_enabled: bool):
 def _mode_selected(mode: str) -> bool:
     value = str(mode or MODE_OFF)
     return value not in (MODE_OFF, "Off")
+

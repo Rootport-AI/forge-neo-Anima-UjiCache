@@ -1,25 +1,21 @@
-# Auto Uji mode 仕様書 v1.0
+﻿# Auto Uji mode 莉墓ｧ俶嶌 v1.0
 
-## 目的
-
-Auto Uji mode は、`UjiCache -Prototype` の UjiCache 条件を CSV 行ごとに切り替え、同じ Generate 操作で複数条件を順番に試すための補助機能である。
-
+## 逶ｮ逧・
+Auto Uji mode 縺ｯ縲～UjiCache` 縺ｮ UjiCache 譚｡莉ｶ繧・CSV 陦後＃縺ｨ縺ｫ蛻・ｊ譖ｿ縺医∝酔縺・Generate 謫堺ｽ懊〒隍・焚譚｡莉ｶ繧帝・分縺ｫ隧ｦ縺吶◆繧√・陬懷勧讖溯・縺ｧ縺ゅｋ縲・
 ## UI
 
-`Auto Uji mode` は `UjiCache -Prototype` アコーディオン内のサブアコーディオンである。
-
+`Auto Uji mode` 縺ｯ `UjiCache` 繧｢繧ｳ繝ｼ繝・ぅ繧ｪ繝ｳ蜀・・繧ｵ繝悶い繧ｳ繝ｼ繝・ぅ繧ｪ繝ｳ縺ｧ縺ゅｋ縲・
 ```text
-UjiCache -Prototype
+UjiCache
   Auto Uji mode
     Enable Auto Uji mode
     Auto Uji CSV
 ```
 
-Auto Uji mode は親の `Enable UjiCache -Prototype` や `Enable UjiCache experiment` を自動で ON にしない。実行する場合、ユーザーは通常どおり両方を ON にする。
-
+Auto Uji mode 縺ｯ隕ｪ縺ｮ `Enable UjiCache` 繧・`Enable UjiCache experiment` 繧定・蜍輔〒 ON 縺ｫ縺励↑縺・ょｮ溯｡後☆繧句ｴ蜷医√Θ繝ｼ繧ｶ繝ｼ縺ｯ騾壼ｸｸ縺ｩ縺翫ｊ荳｡譁ｹ繧・ON 縺ｫ縺吶ｋ縲・
 ## CSV
 
-MVP で扱う列:
+MVP 縺ｧ謇ｱ縺・・:
 
 ```csv
 name,threshold,formula,prediction_strength,slope_ema_smoothing,curve_ema_smoothing,taylor2_curve_strength,apply_prediction_from_skip,use_prediction_after_progress,max_skip_streak,force_full_interval
@@ -28,25 +24,20 @@ linear_a,0.21,linear,0.50,0.20,0.00,0.25,2,0.00,0,0
 taylor2_a,0.21,taylor2,0.50,0.20,0.10,0.25,2,0.00,0,0
 ```
 
-`formula` の短縮名:
+`formula` 縺ｮ遏ｭ邵ｮ蜷・
 
 - `teacache`, `residual`, `residual_only` -> `TeaCache (residual only)`
 - `linear`, `linear_extrapolation` -> `Linear extrapolation`
 - `taylor2`, `taylor`, `quadratic` -> `Taylor2 curve`
 
-未指定列は Generate 時点の UjiCache UI 値を使う。
-
-## 実行単位
-
-CSV 1 行を 1 つの UjiCache 条件として扱う。Forge の `batch_size` は維持し、`n_iter` は `CSV行数 * 元のn_iter` に拡張する。
-
-seed set は CSV 行ごとに共有する。これにより同じ seed 条件で UjiCache パラメータだけを比較できる。
-
+譛ｪ謖・ｮ壼・縺ｯ Generate 譎らせ縺ｮ UjiCache UI 蛟､繧剃ｽｿ縺・・
+## 螳溯｡悟腰菴・
+CSV 1 陦後ｒ 1 縺､縺ｮ UjiCache 譚｡莉ｶ縺ｨ縺励※謇ｱ縺・・orge 縺ｮ `batch_size` 縺ｯ邯ｭ謖√＠縲～n_iter` 縺ｯ `CSV陦梧焚 * 蜈・・n_iter` 縺ｫ諡｡蠑ｵ縺吶ｋ縲・
+seed set 縺ｯ CSV 陦後＃縺ｨ縺ｫ蜈ｱ譛峨☆繧九ゅ％繧後↓繧医ｊ蜷後§ seed 譚｡莉ｶ縺ｧ UjiCache 繝代Λ繝｡繝ｼ繧ｿ縺縺代ｒ豈碑ｼ・〒縺阪ｋ縲・
 ## State
 
-実行中の CSV rows は `p._ujicache_auto_rows` に保持する。現在行の表示用状態だけを `STATE` に置く。
-
-主な状態:
+螳溯｡御ｸｭ縺ｮ CSV rows 縺ｯ `p._ujicache_auto_rows` 縺ｫ菫晄戟縺吶ｋ縲ら樟蝨ｨ陦後・陦ｨ遉ｺ逕ｨ迥ｶ諷九□縺代ｒ `STATE` 縺ｫ鄂ｮ縺上・
+荳ｻ縺ｪ迥ｶ諷・
 
 - `auto_ujicache_enabled`
 - `auto_ujicache_csv`
@@ -56,9 +47,9 @@ seed set は CSV 行ごとに共有する。これにより同じ seed 条件で
 - `auto_ujicache_row_count`
 - `auto_ujicache_original_n_iter`
 
-## ログ
+## 繝ｭ繧ｰ
 
-主なログ:
+荳ｻ縺ｪ繝ｭ繧ｰ:
 
 ```text
 [UjiCache] auto_uji_prepare rows=...
@@ -67,10 +58,6 @@ seed set は CSV 行ごとに共有する。これにより同じ seed 条件で
 [UjiCache] auto_uji_csv_error ...
 ```
 
-## 受け入れ条件
+## 蜿励￠蜈･繧梧擅莉ｶ
 
-1. Auto Uji OFF 時は通常の UjiCache 生成と同じ挙動になる。
-2. UjiCache OFF 時は Auto Uji checkbox が ON でも実行されない。
-3. CSV 行ごとに UjiCache 条件が `STATE` に反映される。
-4. 行をまたいで `previous_residual` や `residual_history` が共有されない。
-5. Auto Uji は UjiCache patch 本体の予測ロジックを変更しない。
+1. Auto Uji OFF 譎ゅ・騾壼ｸｸ縺ｮ UjiCache 逕滓・縺ｨ蜷後§謖吝虚縺ｫ縺ｪ繧九・2. UjiCache OFF 譎ゅ・ Auto Uji checkbox 縺・ON 縺ｧ繧ょｮ溯｡後＆繧後↑縺・・3. CSV 陦後＃縺ｨ縺ｫ UjiCache 譚｡莉ｶ縺・`STATE` 縺ｫ蜿肴丐縺輔ｌ繧九・4. 陦後ｒ縺ｾ縺溘＞縺ｧ `previous_residual` 繧・`residual_history` 縺悟・譛峨＆繧後↑縺・・5. Auto Uji 縺ｯ UjiCache patch 譛ｬ菴薙・莠域ｸｬ繝ｭ繧ｸ繝・け繧貞､画峩縺励↑縺・・

@@ -1,12 +1,12 @@
-# UjiCache -Prototype
+﻿# UjiCache
 
-UjiCache -Prototype is a Forge Neo extension for experimenting with residual reuse and residual prediction during Anima / Cosmos-Predict2 T2I inference.
+UjiCache is a Forge Neo extension for experimenting with residual reuse and residual prediction during Anima / Cosmos-Predict2 T2I inference.
 
 It was split out from the broader `Nz-Anima-PredLab` experiment set. This repository now exposes only the UjiCache prototype and a compact debug log mode.
 
 ## Current Features
 
-- Forge Neo AlwaysVisible panel: `UjiCache -Prototype`
+- Forge Neo AlwaysVisible panel: `UjiCache`
 - Anima / Cosmos-Predict2 model detection
 - UjiCache residual cache experiment for Anima block skipping
 - Prediction formulas: `TeaCache (residual only)`, `Linear extrapolation`, and `Taylor2 curve`
@@ -44,3 +44,4 @@ Credit to `Rootport` or `Rootport-AI` is mandatory. Redistributions and derivati
 ## Development Reminder
 
 Forge Neo may cache Gradio UI component settings in `ui-config.json`. If a slider range or default appears stale after reinstalling the extension, clear or update Forge Neo's UI config and restart the WebUI.
+

@@ -1,6 +1,6 @@
-# Agent Handoff
+﻿# Agent Handoff
 
-This repository is a Forge Neo extension named `UjiCache -Prototype`.
+This repository is a Forge Neo extension named `UjiCache`.
 
 Use this file as the short orientation. The detailed UjiCache behavior is described in `docs/UjiCache-spec-v1.2.md`.
 
@@ -18,7 +18,7 @@ Implemented runtime patch:
 
 Retained UI:
 
-- Top-level accordion: `UjiCache -Prototype`
+- Top-level accordion: `UjiCache`
 - Sub-accordion: `Debug log mode`
 - UjiCache controls, including Auto Uji mode
 
@@ -34,7 +34,7 @@ Removed from the public extension surface:
 
 ## Important Rules
 
-- Preserve baseline behavior when `Enable UjiCache -Prototype` is off.
+- Preserve baseline behavior when `Enable UjiCache` is off.
 - Preserve baseline behavior when the parent enable is on but UjiCache and Debug log mode are both inactive.
 - The first model call must always be full calculation.
 - Do not allow cache use when `previous_residual` is missing.
@@ -54,3 +54,4 @@ Removed from the public extension surface:
 ## Forge Neo Gotcha
 
 Forge Neo can preserve old Gradio component ranges/defaults in `ui-config.json`. If a UI change does not appear after reinstalling the extension, check that file and restart Forge Neo.
+

@@ -1,8 +1,8 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from .state import MODE_OFF, MODES
 
-SECTION = ("ujicache", "UjiCache -Prototype")
+SECTION = ("ujicache", "UjiCache")
 
 
 def on_ui_settings() -> None:
@@ -18,7 +18,7 @@ def on_ui_settings() -> None:
         "ujicache_enable",
         shared.OptionInfo(
             False,
-            "Enable UjiCache -Prototype",
+            "Enable UjiCache",
             section=SECTION,
         ),
     )
@@ -56,3 +56,4 @@ def on_ui_settings() -> None:
             section=SECTION,
         ),
     )
+

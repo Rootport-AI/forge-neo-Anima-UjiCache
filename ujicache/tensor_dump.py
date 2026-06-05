@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from datetime import datetime
@@ -174,7 +174,7 @@ def _write_meta(run_dir: Path, p: Any) -> None:
     evidence = detection.evidence if isinstance(detection, ModelDetection) else {}
     meta = {
         "schema_version": 1,
-        "extension": "UjiCache -Prototype",
+        "extension": "UjiCache",
         "model": evidence.get("checkpoint_name") or evidence.get("filename") or "unknown",
         "generation_index": STATE.generation_index,
         "created_at": now.isoformat(),
@@ -245,3 +245,4 @@ def _short_error(value: Any) -> str:
     if len(text) > 220:
         return text[:217] + "..."
     return text
+
