@@ -80,27 +80,6 @@ class Script(scripts.Script):
                     value=_default_option("ujicache_verbose_diagnose_log", False),
                     elem_id="ujicache-verbose-diagnose-log",
                 )
-                debug_log_enabled.change(
-                    fn=_enable_parent_if_child_enabled,
-                    inputs=[debug_log_enabled],
-                    outputs=[enabled],
-                )
-                mode.change(
-                    fn=_debug_mode_selection_updates,
-                    inputs=[mode],
-                    outputs=[enabled, debug_log_enabled],
-                )
-                dump_ujicache_residual.change(
-                    fn=_enable_parent_and_debug_if_child_enabled,
-                    inputs=[dump_ujicache_residual],
-                    outputs=[enabled, debug_log_enabled],
-                )
-
-            ujicache_enabled = gr.Checkbox(
-                label="Enable UjiCache experiment",
-                value=False,
-                elem_id="ujicache-experiment-enable",
-            )
             ujicache_preset = gr.Dropdown(
                 label="UjiCache preset",
                 choices=UJICACHE_PRESETS,
@@ -275,10 +254,10 @@ class Script(scripts.Script):
                     ujicache_curve_ema_smoothing,
                 ],
             )
-            ujicache_enabled.change(
+            enabled.change(
                 fn=_ujicache_enable_updates,
-                inputs=[ujicache_enabled],
-                outputs=[enabled, auto_ujicache_enabled],
+                inputs=[enabled],
+                outputs=[auto_ujicache_enabled],
             )
 
         return [
@@ -288,7 +267,6 @@ class Script(scripts.Script):
             print_timing_log,
             verbose_diagnose_log,
             dump_ujicache_residual,
-            ujicache_enabled,
             ujicache_preset,
             ujicache_threshold,
             ujicache_start_percent,
@@ -377,7 +355,7 @@ def _prepare_auto_ujicache_run(p, script_args) -> None:
     STATE.auto_ujicache_original_n_iter = 1
     STATE.auto_ujicache_parse_error = None
 
-    if not (STATE.enabled and STATE.ujicache_enabled and STATE.auto_ujicache_enabled):
+    if not (STATE.enabled and STATE.auto_ujicache_enabled):
         return
 
     result = parse_auto_ujicache_csv(STATE.auto_ujicache_csv)
@@ -574,8 +552,8 @@ def _safe_int(value, default: int) -> int:
 
 
 def _apply_ui_args(script_args) -> None:
-    if len(script_args) >= 27:
-        STATE.apply_options(*script_args[:27])
+    if len(script_args) >= 26:
+        STATE.apply_options(*script_args[:26])
         return
     STATE.refresh_settings()
 
@@ -746,31 +724,8 @@ def _ujicache_prediction_control_updates(formula: str, slope_ema_smoothing: floa
     )
 
 
-def _ujicache_enable_updates(child_enabled: bool):
-    if child_enabled:
-        return True, gr.update()
-    return gr.update(), False
-
-
-def _enable_parent_if_child_enabled(child_enabled: bool):
-    if child_enabled:
-        return True
-    return gr.update()
-
-
-def _debug_mode_selection_updates(mode: str):
-    if _mode_selected(mode):
-        return True, True
-    return gr.update(), gr.update()
-
-
-def _enable_parent_and_debug_if_child_enabled(child_enabled: bool):
-    if child_enabled:
-        return True, True
-    return gr.update(), gr.update()
-
-
-def _mode_selected(mode: str) -> bool:
-    value = str(mode or MODE_OFF)
-    return value not in (MODE_OFF, "Off")
+def _ujicache_enable_updates(enabled: bool):
+    if enabled:
+        return gr.update()
+    return False
 

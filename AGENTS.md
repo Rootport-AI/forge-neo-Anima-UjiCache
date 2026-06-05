@@ -35,7 +35,6 @@ Removed from the public extension surface:
 ## Important Rules
 
 - Preserve baseline behavior when `Enable UjiCache` is off.
-- Preserve baseline behavior when the parent enable is on but UjiCache and Debug log mode are both inactive.
 - The first model call must always be full calculation.
 - Do not allow cache use when `previous_residual` is missing.
 - Restore monkey patches on disable, unsupported model, unload, and degraded paths.

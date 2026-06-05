@@ -145,8 +145,10 @@ class RuntimeState:
             self.verbose_diagnose_log = bool(
                 getattr(shared.opts, "ujicache_verbose_diagnose_log", False)
             )
+            self.ujicache_enabled = self.enabled
         except Exception as exc:
             self.enabled = False
+            self.ujicache_enabled = False
             self.mode = MODE_OFF
             self.status = "error"
             self.error_message = f"failed to read settings: {exc}"
@@ -159,7 +161,6 @@ class RuntimeState:
         print_timing_log: bool,
         verbose_diagnose_log: bool,
         dump_ujicache_residual: bool,
-        ujicache_enabled: bool,
         ujicache_preset: str = UJICACHE_PRESET_CUSTOM,
         ujicache_threshold: float = 0.07,
         ujicache_start_percent: float = 0.05,
@@ -188,7 +189,7 @@ class RuntimeState:
         self.verbose_diagnose_log = bool(verbose_diagnose_log)
         self.dump_ujicache_residual = bool(dump_ujicache_residual)
 
-        self.ujicache_enabled = bool(ujicache_enabled)
+        self.ujicache_enabled = self.enabled
         self.ujicache_preset = (
             ujicache_preset if ujicache_preset in UJICACHE_PRESETS else UJICACHE_PRESET_CUSTOM
         )
@@ -241,9 +242,9 @@ class RuntimeState:
         self.auto_ujicache_csv = str(auto_ujicache_csv or "")
 
     def active(self) -> bool:
-        return self.enabled and (
-            self.mode != MODE_OFF
-            or self.ujicache_enabled
+        return (
+            self.ujicache_enabled
+            or (self.debug_log_enabled and self.mode != MODE_OFF)
             or self.tensor_dump_active()
         )
 
