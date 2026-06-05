@@ -10,28 +10,28 @@ As an independent extension, it exposes only the UjiCache controls, the `Debug l
 ```text
 UjiCache
   Enable UjiCache
+  UjiCache preset
+  Rel L1 threshold
+  Start progress
+  End progress
+  Modulated source
+  Coefficient profile
+  Max skip streak
+  Force full interval
+  Prediction formula
+  Prediction controls
+  Auto Uji mode
+    Enable Auto Uji mode
+    Auto Uji CSV
   Debug log mode
     Enable debug log mode
     Debug log
     Dump UjiCache residual
     Print timing log
     Verbose diagnose log
-  UjiCache preset
-  Rel L1 threshold
-  Start progress
-  End progress
-  Prediction formula
-  Prediction controls
   Cache device
-  Modulated source
-  Coefficient profile
-  Max skip streak
-  Force full interval
   Dry run
   Verbose UjiCache trace
-  Auto Uji mode
-    Enable Auto Uji mode
-    Auto Uji CSV
 ```
 
 `Enable UjiCache` is the single UjiCache patch toggle. There is no separate experiment enable checkbox.

@@ -49,37 +49,6 @@ class Script(scripts.Script):
                 value=_default_option("ujicache_enable", False),
                 elem_id="ujicache-enable",
             )
-            with gr.Accordion("Debug log mode", open=False, elem_id="ujicache-debug-panel"):
-                debug_log_enabled = gr.Checkbox(
-                    label="Enable debug log mode",
-                    value=_default_option("ujicache_debug_log_enable", True),
-                    elem_id="ujicache-debug-enable",
-                )
-                mode = gr.Dropdown(
-                    label="Debug log",
-                    choices=MODES,
-                    value=_default_mode_option(),
-                    elem_id="ujicache-mode",
-                )
-                dump_ujicache_residual = gr.Checkbox(
-                    label="Dump UjiCache residual",
-                    value=False,
-                    elem_id="ujicache-dump-residual",
-                )
-                gr.HTML(
-                    '<div style="border-top: 3px solid var(--block-border-color, #4b5563); margin: 0.85rem 0 0.7rem;"></div>',
-                    elem_id="ujicache-debug-dump-divider",
-                )
-                print_timing_log = gr.Checkbox(
-                    label="Print timing log",
-                    value=_default_option("ujicache_print_timing_log", True),
-                    elem_id="ujicache-print-timing-log",
-                )
-                verbose_diagnose_log = gr.Checkbox(
-                    label="Verbose diagnose log",
-                    value=_default_option("ujicache_verbose_diagnose_log", False),
-                    elem_id="ujicache-verbose-diagnose-log",
-                )
             ujicache_preset = gr.Dropdown(
                 label="UjiCache preset",
                 choices=UJICACHE_PRESETS,
@@ -109,6 +78,34 @@ class Script(scripts.Script):
                 step=0.01,
                 value=0.95,
                 elem_id="ujicache-end-percent",
+            )
+            ujicache_modulated_source = gr.Dropdown(
+                label="Modulated source",
+                choices=UJICACHE_MODULATED_SOURCES,
+                value=UJICACHE_SOURCE_FIRST_BLOCK_SHIFT,
+                elem_id="ujicache-modulated-source",
+            )
+            ujicache_coefficient_profile = gr.Dropdown(
+                label="Coefficient profile",
+                choices=UJICACHE_COEFFICIENT_PROFILES,
+                value=UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
+                elem_id="ujicache-coefficient-profile",
+            )
+            ujicache_max_skip_streak = gr.Slider(
+                label="Max skip streak (0 = off)",
+                minimum=0,
+                maximum=64,
+                step=1,
+                value=0,
+                elem_id="ujicache-max-skip-streak",
+            )
+            ujicache_force_full_interval = gr.Slider(
+                label="Force full interval (0 = off)",
+                minimum=0,
+                maximum=64,
+                step=1,
+                value=0,
+                elem_id="ujicache-force-full-interval",
             )
             ujicache_formula = gr.Dropdown(
                 label="Prediction formula",
@@ -170,50 +167,6 @@ class Script(scripts.Script):
                 interactive=False,
                 elem_id="ujicache-curve-ema-smoothing",
             )
-            ujicache_cache_device = gr.Radio(
-                label="Cache device",
-                choices=UJICACHE_CACHE_DEVICES,
-                value=UJICACHE_CACHE_DEVICE_CUDA,
-                elem_id="ujicache-cache-device",
-            )
-            ujicache_modulated_source = gr.Dropdown(
-                label="Modulated source",
-                choices=UJICACHE_MODULATED_SOURCES,
-                value=UJICACHE_SOURCE_FIRST_BLOCK_SHIFT,
-                elem_id="ujicache-modulated-source",
-            )
-            ujicache_coefficient_profile = gr.Dropdown(
-                label="Coefficient profile",
-                choices=UJICACHE_COEFFICIENT_PROFILES,
-                value=UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
-                elem_id="ujicache-coefficient-profile",
-            )
-            ujicache_max_skip_streak = gr.Slider(
-                label="Max skip streak (0 = off)",
-                minimum=0,
-                maximum=64,
-                step=1,
-                value=0,
-                elem_id="ujicache-max-skip-streak",
-            )
-            ujicache_force_full_interval = gr.Slider(
-                label="Force full interval (0 = off)",
-                minimum=0,
-                maximum=64,
-                step=1,
-                value=0,
-                elem_id="ujicache-force-full-interval",
-            )
-            ujicache_dry_run = gr.Checkbox(
-                label="Dry run",
-                value=False,
-                elem_id="ujicache-dry-run",
-            )
-            ujicache_verbose_trace = gr.Checkbox(
-                label="Verbose UjiCache trace",
-                value=False,
-                elem_id="ujicache-verbose-trace",
-            )
             with gr.Accordion(
                 "Auto Uji mode",
                 open=False,
@@ -229,6 +182,53 @@ class Script(scripts.Script):
                     lines=6,
                     elem_id="ujicache-auto-uji-csv",
                 )
+            with gr.Accordion("Debug log mode", open=False, elem_id="ujicache-debug-panel"):
+                debug_log_enabled = gr.Checkbox(
+                    label="Enable debug log mode",
+                    value=_default_option("ujicache_debug_log_enable", True),
+                    elem_id="ujicache-debug-enable",
+                )
+                mode = gr.Dropdown(
+                    label="Debug log",
+                    choices=MODES,
+                    value=_default_mode_option(),
+                    elem_id="ujicache-mode",
+                )
+                dump_ujicache_residual = gr.Checkbox(
+                    label="Dump UjiCache residual",
+                    value=False,
+                    elem_id="ujicache-dump-residual",
+                )
+                gr.HTML(
+                    '<div style="border-top: 3px solid var(--block-border-color, #4b5563); margin: 0.85rem 0 0.7rem;"></div>',
+                    elem_id="ujicache-debug-dump-divider",
+                )
+                print_timing_log = gr.Checkbox(
+                    label="Print timing log",
+                    value=_default_option("ujicache_print_timing_log", True),
+                    elem_id="ujicache-print-timing-log",
+                )
+                verbose_diagnose_log = gr.Checkbox(
+                    label="Verbose diagnose log",
+                    value=_default_option("ujicache_verbose_diagnose_log", False),
+                    elem_id="ujicache-verbose-diagnose-log",
+                )
+            ujicache_cache_device = gr.Radio(
+                label="Cache device",
+                choices=UJICACHE_CACHE_DEVICES,
+                value=UJICACHE_CACHE_DEVICE_CUDA,
+                elem_id="ujicache-cache-device",
+            )
+            ujicache_dry_run = gr.Checkbox(
+                label="Dry run",
+                value=False,
+                elem_id="ujicache-dry-run",
+            )
+            ujicache_verbose_trace = gr.Checkbox(
+                label="Verbose UjiCache trace",
+                value=False,
+                elem_id="ujicache-verbose-trace",
+            )
 
             ujicache_formula.change(
                 fn=_ujicache_prediction_control_updates,
