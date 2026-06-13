@@ -54,7 +54,7 @@ UJICACHE_COEFFICIENTS_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT = [
 @dataclass
 class RuntimeState:
     enabled: bool = False
-    debug_log_enabled: bool = True
+    debug_log_enabled: bool = False
     mode: str = MODE_OFF
     print_timing_log: bool = True
     verbose_diagnose_log: bool = False
@@ -142,7 +142,7 @@ class RuntimeState:
 
             self.enabled = bool(getattr(shared.opts, "ujicache_enable", False))
             self.debug_log_enabled = bool(
-                getattr(shared.opts, "ujicache_debug_log_enable", True)
+                getattr(shared.opts, "ujicache_debug_log_enable", False)
             )
             mode = getattr(shared.opts, "ujicache_mode", MODE_OFF)
             self.mode = _normalize_mode(mode) if self.debug_log_enabled else MODE_OFF

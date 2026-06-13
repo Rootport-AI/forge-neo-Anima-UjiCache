@@ -185,7 +185,7 @@ class Script(scripts.Script):
             with gr.Accordion("Debug log mode", open=False, elem_id="ujicache-debug-panel"):
                 debug_log_enabled = gr.Checkbox(
                     label="Enable debug log mode",
-                    value=_default_option("ujicache_debug_log_enable", True),
+                    value=_default_option("ujicache_debug_log_enable", False),
                     elem_id="ujicache-debug-enable",
                 )
                 mode = gr.Dropdown(

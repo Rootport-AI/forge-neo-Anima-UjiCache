@@ -25,7 +25,7 @@ def on_ui_settings() -> None:
     add_option_once(
         "ujicache_debug_log_enable",
         shared.OptionInfo(
-            True,
+            False,
             "Enable debug log mode",
             section=SECTION,
         ),
