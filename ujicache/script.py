@@ -28,6 +28,7 @@ from .state import (
     UJICACHE_PRESETS,
     UJICACHE_PROFILE_DEFAULT,
     ujicache_coefficients_for_profile,
+    ujicache_expected_shift_for_profile,
     ujicache_window_for_profile,
 )
 from .timing import start_sampling
@@ -646,6 +647,7 @@ def _begin_generation(p, script_args, source: str) -> None:
                 warning(f"calibration_capture_initialize_failed reason={exc}")
 
     _configure_generation_patches()
+    _check_profile_shift_match()
     _apply_infotext_metadata(p)
     log_generation_start(p)
 
@@ -767,6 +769,37 @@ def _model_sampling_shift() -> float | None:
         return None if value is None else float(value)
     except Exception:
         return None
+
+
+def _check_profile_shift_match() -> None:
+    """Warn when the selected calibrated preset's Shift does not match the live
+    model's effective shift.
+
+    A calibrated preset's coefficients are fitted for a specific Shift; running
+    it at a different shift moves the sigma schedule off the fitted domain and
+    silently distorts skip decisions. daraskme/Identity carry no Shift and are
+    skipped. Warns once per (preset shift, effective shift) pair per session.
+    """
+    if not STATE.ujicache_enabled:
+        return
+    expected = ujicache_expected_shift_for_profile(STATE.ujicache_coefficient_profile)
+    if expected is None:
+        return
+    effective = _model_sampling_shift()
+    if effective is None:
+        return
+    if round(effective) == expected:
+        return
+    key = f"{STATE.ujicache_coefficient_profile}@{effective:.3f}"
+    if key in STATE.ujicache_shift_warned_keys:
+        return
+    STATE.ujicache_shift_warned_keys.add(key)
+    warning(
+        "ujicache_shift_mismatch "
+        f"profile={STATE.ujicache_coefficient_profile} "
+        f"expected_shift={expected} effective_shift={effective:.3f}; "
+        "coefficients are off their fitted domain — match the model Shift to the preset"
+    )
 
 
 def _default_option(key: str, default):

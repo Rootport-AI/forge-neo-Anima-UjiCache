@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from time import perf_counter
 from typing import Any
@@ -196,6 +197,26 @@ def ujicache_window_for_profile(profile: str) -> tuple[float, float] | None:
     return entry["window"]
 
 
+_PROFILE_SHIFT_PATTERN = re.compile(r"Shift(\d+)")
+
+
+def ujicache_expected_shift_for_profile(profile: str) -> int | None:
+    """The Shift value a calibrated preset was fitted for, parsed from its name.
+
+    Returns the integer in `..._Shift<n>_...`, or None when the profile carries
+    no shift expectation (daraskme legacy, Identity). Used to warn when the live
+    model's effective shift does not match the selected preset — a mismatch
+    moves the sigma schedule off the coefficients' fitted domain.
+    """
+    match = _PROFILE_SHIFT_PATTERN.search(profile or "")
+    if match is None:
+        return None
+    try:
+        return int(match.group(1))
+    except Exception:
+        return None
+
+
 def ujicache_modulated_source_for_profile(profile: str) -> str:
     """Modulated source is derived from the coefficient profile, not chosen in the UI.
 
@@ -288,6 +309,8 @@ class RuntimeState:
     calibration_capture_records: int = 0
     calibration_capture_errors: int = 0
     calibration_capture_warned_reasons: set[str] = field(default_factory=set)
+
+    ujicache_shift_warned_keys: set[str] = field(default_factory=set)
 
     generation_logged: bool = False
     patches: dict[str, Any] = field(default_factory=dict)
