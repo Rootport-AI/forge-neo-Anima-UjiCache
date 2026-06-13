@@ -72,6 +72,17 @@ class Script(scripts.Script):
                 value=_format_p_anima_x(UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT),
                 elem_id="ujicache-p-anima-x",
             )
+            gr.HTML(
+                "<style>"
+                "#ujicache-p-anima-x code {"
+                " background: none;"
+                " border: none;"
+                " padding: 0;"
+                " color: var(--body-text-color-subdued);"
+                " }"
+                "</style>",
+                elem_id="ujicache-p-anima-x-style",
+            )
             ujicache_start_percent = gr.Slider(
                 label="Start progress",
                 minimum=0.0,
