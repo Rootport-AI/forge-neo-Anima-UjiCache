@@ -76,6 +76,27 @@ After a profile change the user can still move the sliders by hand. The fit wind
 assume 30 steps; using a calibrated preset at a different step count moves the window
 out of the coefficients' fitted domain (30-steps-only by design).
 
+### Shift must match the preset
+
+Each calibrated preset is fitted for a specific Shift (`..._Shift<n>_...` in the name).
+The Shift warps the sigma schedule, which determines the `rel_l1` sequence the
+polynomial sees. Running a preset at a different model Shift moves `rel_l1` off the
+coefficients' fitted domain and silently distorts the skip decisions (e.g. a `Shift1`
+preset run at effective shift 3 inverts the expected threshold sensitivity).
+
+The model's effective shift is `forge_objects.unet.model.predictor.shift`
+(`PredictionDiscreteFlow` for Anima), read via
+`forge_introspection.model_sampling_info()`. At generation start, UjiCache compares
+the preset's expected Shift against the effective shift; on mismatch it logs (once per
+session per pair):
+
+```text
+[UjiCache] ujicache_shift_mismatch profile=... expected_shift=N effective_shift=M; ...
+```
+
+Generation is not blocked — the warning is informational. daraskme legacy and Identity
+profiles carry no Shift and are not checked.
+
 ## Prediction Formulas
 
 - `TeaCache (residual only)`: reuse the most recent full-calculation residual without prediction.
