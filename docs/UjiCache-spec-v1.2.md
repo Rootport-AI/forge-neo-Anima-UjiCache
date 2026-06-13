@@ -1,4 +1,4 @@
-# UjiCache Spec v1.2
+# UjiCache Spec v1.4
 
 ## Overview
 
@@ -12,10 +12,10 @@ UjiCache
   Enable UjiCache
   UjiCache preset
   Rel L1 threshold
+  Coefficient profile
+  p_Anima(x)            (read-only display of the active polynomial)
   Start progress
   End progress
-  Modulated source
-  Coefficient profile
   Max skip streak
   Force full interval
   Prediction formula
@@ -37,6 +37,44 @@ UjiCache
 
 `Enable UjiCache` is the single UjiCache patch toggle. There is no separate experiment enable checkbox.
 `Debug log mode` remains a sub-accordion and does not enable UjiCache automatically.
+
+`Modulated source` is no longer a UI control. It is derived from the selected
+`Coefficient profile` (see below): `Identity estimate` uses `timestep_embedding`,
+every other profile uses `first_block_shift`. The derived value is still recorded
+in the `Uji modulated_source` infotext key.
+
+## Coefficient profile
+
+The `Coefficient profile` dropdown selects the polynomial `p_Anima(x)` used by the
+TeaCache-style skip decision (the rescaling of the modulated-input rel L1 into an
+estimated output change). Profiles:
+
+- `Anima 2B 30step first_block_shift`: daraskme's ComfyUI-derived legacy coefficients.
+- `Identity estimate`: `p(x) = x`.
+- 24 re-calibrated presets (`<sampler>-<scheduler>_30steps_Shift<n>_<mode>(fit<lo>-<hi>step)`),
+  fitted from Forge Neo `Capture calibration pairs` data. Each preset is **30 steps only**
+  and is paired with a fit window; the name embeds the fit step range. Full coefficient
+  list and provenance: `docs/PRESET-COEFFICIENTS.md` / `docs/PRESET-COEFFICIENTS.json`.
+
+Coefficients and the recommended window live together in a single registry
+(`UJICACHE_PRESET_REGISTRY` in `state.py`). The default profile is
+`ER-SDE-Beta_30steps_Shift3_optimal(fit14-22step)`.
+
+### p_Anima(x) display and loose window coupling
+
+`p_Anima(x)` is a read-only Markdown line showing the active polynomial in descending
+powers at full precision (never rounded). It is not editable.
+
+Selecting a profile **loosely** drives the `Start progress` / `End progress` sliders:
+
+- A calibrated preset moves the sliders to its fit window (`start = floor(fit_lo / (steps-1), 0.01)`,
+  `end = ceil(fit_hi / (steps-1), 0.01)`, with `steps = 30`), so the fit endpoints stay inside the window.
+- `Anima 2B 30step first_block_shift` resets the sliders to `0.05 / 0.95`.
+- `Identity estimate` leaves the sliders untouched.
+
+After a profile change the user can still move the sliders by hand. The fit windows
+assume 30 steps; using a calibrated preset at a different step count moves the window
+out of the coefficients' fitted domain (30-steps-only by design).
 
 ## Prediction Formulas
 
@@ -74,15 +112,21 @@ When UjiCache is enabled, PNG infotext receives `Uji ...` keys:
 - `Uji formula`
 - `Uji threshold`
 - `Uji progress`
+- `Uji use_prediction_after_progress`
+- `Uji apply_prediction_from_skip`
 - `Uji prediction_strength`
+- `Uji taylor2_curve_strength`
 - `Uji slope_ema_smoothing`
 - `Uji curve_ema_smoothing`
-- `Uji auto_row_index`
-- `Uji auto_row_name`
+- `Uji modulated_source` (derived from the coefficient profile)
+- `Uji coefficient_profile`
+- `Uji max_skip_streak`
+- `Uji force_full_interval`
 - `Uji shift` (when the model sampling object exposes shift)
 - `Uji capture_pairs` (when `Capture calibration pairs` is on)
+- `Uji auto_row_index` / `Uji auto_row_name` (Auto Uji mode only)
 
-## Capture calibration pairs (v1.3 addendum)
+## Capture calibration pairs
 
 `Capture calibration pairs` (Debug log mode) forces full calculation on every
 model call and writes `calibration_pairs.jsonl` into the debug run folder: one
@@ -103,6 +147,7 @@ no-op when off.
 - `ujicache/diagnostics.py`
 - `ujicache/auto_ujicache.py`
 - `ujicache/tensor_dump.py`
+- `ujicache/calibration_capture.py`
 
 ## Acceptance
 

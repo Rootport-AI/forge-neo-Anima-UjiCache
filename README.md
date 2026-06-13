@@ -10,8 +10,10 @@ It was split out from the broader `Nz-Anima-PredLab` experiment set. This reposi
 - Anima / Cosmos-Predict2 model detection
 - UjiCache residual cache experiment for Anima block skipping
 - Prediction formulas: `TeaCache (residual only)`, `Linear extrapolation`, and `Taylor2 curve`
+- Coefficient profiles: daraskme legacy, Identity, and 24 re-calibrated Forge Neo presets; selecting a profile loosely sets the Start/End progress window
+- Read-only `p_Anima(x)` display of the active polynomial coefficients
 - Auto Uji mode for CSV-driven UjiCache parameter sweeps
-- Debug log mode with timing logs, diagnose logs, and optional UjiCache residual dump
+- Debug log mode with timing logs, diagnose logs, optional UjiCache residual dump, and `Capture calibration pairs` (per-step rel_l1/out_rel JSONL for coefficient re-fitting)
 - Runtime patch restore on disable, unsupported model, or unload
 
 Logs are printed to the StabilityMatrix / Forge Neo console with the `[UjiCache]` prefix.
@@ -34,6 +36,7 @@ Forge Neo may pass unused kwargs such as `control` into `Anima.forward`; UjiCach
 - [UjiCache specification](docs/UjiCache-spec-v1.2.md)
 - [UjiCache EMA prediction notes](docs/UjiCache%20EMA%20Prediction_spec.md)
 - [Auto Uji mode specification](docs/Auto-Uji-mode_spec_v1.0.md)
+- [Coefficient profile presets](docs/PRESET-COEFFICIENTS.md)
 
 ## License and Credit
 

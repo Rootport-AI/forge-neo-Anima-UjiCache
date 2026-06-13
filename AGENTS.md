@@ -40,6 +40,9 @@ Removed from the public extension surface:
 - Restore monkey patches on disable, unsupported model, unload, and degraded paths.
 - Do not silently fail. Log degraded or fallback reasons with the `[UjiCache]` prefix.
 - Forge Neo can pass unused kwargs such as `control` into `Anima.forward`; UjiCache should ignore unused kwargs and consume only the values it needs, especially `transformer_options`.
+- `Modulated source` is not a UI control; it is derived from the `Coefficient profile` via `ujicache_modulated_source_for_profile()`. Do not reintroduce a Modulated source dropdown.
+- `UJICACHE_PRESET_REGISTRY` in `state.py` is the single source of truth for both profile coefficients and recommended Start/End windows. Add presets there; coefficients and the `p_Anima(x)` display follow automatically.
+- The `ui()` return list, `_EXPECTED_UI_ARG_COUNT`, and the `apply_options` signature must stay aligned (currently 26). When adding/removing a UI control wired to settings, update all three together.
 
 ## Useful Files
 
