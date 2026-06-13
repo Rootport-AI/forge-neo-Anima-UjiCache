@@ -26,8 +26,9 @@ from .state import (
     UJICACHE_FORMULAS,
     UJICACHE_PRESET_CUSTOM,
     UJICACHE_PRESETS,
-    UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
+    UJICACHE_PROFILE_DEFAULT,
     ujicache_coefficients_for_profile,
+    ujicache_window_for_profile,
 )
 from .timing import start_sampling
 
@@ -65,11 +66,11 @@ class Script(scripts.Script):
             ujicache_coefficient_profile = gr.Dropdown(
                 label="Coefficient profile",
                 choices=UJICACHE_COEFFICIENT_PROFILES,
-                value=UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
+                value=UJICACHE_PROFILE_DEFAULT,
                 elem_id="ujicache-coefficient-profile",
             )
             p_anima_x = gr.Markdown(
-                value=_format_p_anima_x(UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT),
+                value=_format_p_anima_x(UJICACHE_PROFILE_DEFAULT),
                 elem_id="ujicache-p-anima-x",
             )
             gr.HTML(
@@ -88,7 +89,7 @@ class Script(scripts.Script):
                 minimum=0.0,
                 maximum=1.0,
                 step=0.01,
-                value=0.05,
+                value=0.48,
                 elem_id="ujicache-start-percent",
             )
             ujicache_end_percent = gr.Slider(
@@ -96,7 +97,7 @@ class Script(scripts.Script):
                 minimum=0.0,
                 maximum=1.0,
                 step=0.01,
-                value=0.95,
+                value=0.76,
                 elem_id="ujicache-end-percent",
             )
             ujicache_max_skip_streak = gr.Slider(
@@ -278,9 +279,9 @@ class Script(scripts.Script):
                 outputs=[auto_ujicache_enabled],
             )
             ujicache_coefficient_profile.change(
-                fn=_ujicache_p_anima_x_update,
+                fn=_ujicache_profile_change_updates,
                 inputs=[ujicache_coefficient_profile],
-                outputs=[p_anima_x],
+                outputs=[ujicache_start_percent, ujicache_end_percent, p_anima_x],
             )
 
         return [
@@ -821,8 +822,23 @@ def _format_p_anima_x(profile: str) -> str:
     return "`p_Anima(x) = " + " ".join(terms) + "`"
 
 
-def _ujicache_p_anima_x_update(profile: str):
-    return gr.update(value=_format_p_anima_x(profile))
+def _ujicache_profile_change_updates(profile: str):
+    """React to a Coefficient profile change: loosely move the Start/End sliders
+    to the profile's recommended window and refresh p_Anima(x).
+
+    Window semantics (ujicache_window_for_profile):
+      (start, end) -> move the sliders there (calibrated presets and daraskme).
+      None         -> leave the sliders untouched (Identity estimate).
+    The user can still move the sliders by hand afterwards (loose coupling).
+    """
+    window = ujicache_window_for_profile(profile)
+    if window is None:
+        start_update = gr.update()
+        end_update = gr.update()
+    else:
+        start_update = gr.update(value=window[0])
+        end_update = gr.update(value=window[1])
+    return start_update, end_update, gr.update(value=_format_p_anima_x(profile))
 
 
 def _ujicache_prediction_control_updates(formula: str, slope_ema_smoothing: float):
