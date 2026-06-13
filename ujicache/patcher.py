@@ -7,13 +7,11 @@ from .logging import info, warning
 from .state import (
     STATE,
     UJICACHE_CACHE_DEVICE_CPU,
-    UJICACHE_COEFFICIENTS_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
     UJICACHE_FORMULA_LINEAR,
     UJICACHE_FORMULA_TAYLOR2,
     UJICACHE_FORMULA_TEACACHE,
-    UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
-    UJICACHE_PROFILE_IDENTITY,
     UJICACHE_SOURCE_FIRST_BLOCK_SHIFT,
+    ujicache_coefficients_for_profile,
 )
 
 UJICACHE_MAX_NORM_RATIO = 3.0
@@ -547,11 +545,7 @@ def _cache_poly1d(value: float, coefficients: list[float]) -> float:
 
 
 def _ujicache_coefficients() -> list[float]:
-    if STATE.ujicache_coefficient_profile == UJICACHE_PROFILE_IDENTITY:
-        return [1.0, 0.0]
-    if STATE.ujicache_coefficient_profile == UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT:
-        return UJICACHE_COEFFICIENTS_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT
-    return UJICACHE_COEFFICIENTS_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT
+    return ujicache_coefficients_for_profile(STATE.ujicache_coefficient_profile)
 
 
 def _progress(step_index: int) -> float:

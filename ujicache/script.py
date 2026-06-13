@@ -24,11 +24,10 @@ from .state import (
     UJICACHE_FORMULA_TAYLOR2,
     UJICACHE_FORMULA_TEACACHE,
     UJICACHE_FORMULAS,
-    UJICACHE_MODULATED_SOURCES,
     UJICACHE_PRESET_CUSTOM,
     UJICACHE_PRESETS,
     UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
-    UJICACHE_SOURCE_FIRST_BLOCK_SHIFT,
+    ujicache_coefficients_for_profile,
 )
 from .timing import start_sampling
 
@@ -63,6 +62,19 @@ class Script(scripts.Script):
                 value=0.07,
                 elem_id="ujicache-threshold",
             )
+            ujicache_coefficient_profile = gr.Dropdown(
+                label="Coefficient profile",
+                choices=UJICACHE_COEFFICIENT_PROFILES,
+                value=UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
+                elem_id="ujicache-coefficient-profile",
+            )
+            p_anima_x = gr.Textbox(
+                label="p_Anima(x)",
+                value=_format_p_anima_x(UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT),
+                interactive=False,
+                max_lines=3,
+                elem_id="ujicache-p-anima-x",
+            )
             ujicache_start_percent = gr.Slider(
                 label="Start progress",
                 minimum=0.0,
@@ -78,18 +90,6 @@ class Script(scripts.Script):
                 step=0.01,
                 value=0.95,
                 elem_id="ujicache-end-percent",
-            )
-            ujicache_modulated_source = gr.Dropdown(
-                label="Modulated source",
-                choices=UJICACHE_MODULATED_SOURCES,
-                value=UJICACHE_SOURCE_FIRST_BLOCK_SHIFT,
-                elem_id="ujicache-modulated-source",
-            )
-            ujicache_coefficient_profile = gr.Dropdown(
-                label="Coefficient profile",
-                choices=UJICACHE_COEFFICIENT_PROFILES,
-                value=UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
-                elem_id="ujicache-coefficient-profile",
             )
             ujicache_max_skip_streak = gr.Slider(
                 label="Max skip streak (0 = off)",
@@ -269,6 +269,11 @@ class Script(scripts.Script):
                 inputs=[enabled],
                 outputs=[auto_ujicache_enabled],
             )
+            ujicache_coefficient_profile.change(
+                fn=_ujicache_p_anima_x_update,
+                inputs=[ujicache_coefficient_profile],
+                outputs=[p_anima_x],
+            )
 
         return [
             enabled,
@@ -289,7 +294,6 @@ class Script(scripts.Script):
             ujicache_slope_ema_smoothing,
             ujicache_curve_ema_smoothing,
             ujicache_cache_device,
-            ujicache_modulated_source,
             ujicache_coefficient_profile,
             ujicache_max_skip_streak,
             ujicache_force_full_interval,
@@ -569,7 +573,7 @@ def _safe_int(value, default: int) -> int:
         return default
 
 
-_EXPECTED_UI_ARG_COUNT = 27
+_EXPECTED_UI_ARG_COUNT = 26
 _ui_arg_count_warned = False
 
 
@@ -770,6 +774,45 @@ def _default_mode_option() -> str:
     if mode == "Off":
         return MODE_OFF
     return mode if mode in MODES else MODE_OFF
+
+
+_SUPERSCRIPTS = {0: "", 1: "", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹"}
+
+
+def _superscript(power: int) -> str:
+    if power <= 1:
+        return _SUPERSCRIPTS.get(power, "")
+    return "".join(_SUPERSCRIPTS.get(int(digit), "") for digit in str(power))
+
+
+def _format_p_anima_x(profile: str) -> str:
+    """Render the active coefficient polynomial p_Anima(x) in descending powers.
+
+    Read-only display. Coefficients are shown at full precision (never rounded):
+    some profiles produce very small coefficients that would collapse to 0 if
+    rounded. Signs are operator-ized (A·x⁴ − B·x³ + …) for readability.
+    """
+    coefficients = ujicache_coefficients_for_profile(profile)
+    if not coefficients:
+        return "p_Anima(x) = (no coefficients)"
+    degree = len(coefficients) - 1
+    terms: list[str] = []
+    for index, coefficient in enumerate(coefficients):
+        power = degree - index
+        magnitude = abs(float(coefficient))
+        variable = f"·x{_superscript(power)}" if power >= 1 else ""
+        term = f"{magnitude!r}{variable}"
+        if not terms:
+            sign = "-" if float(coefficient) < 0 else ""
+            terms.append(f"{sign}{term}")
+        else:
+            operator = "−" if float(coefficient) < 0 else "+"
+            terms.append(f"{operator} {term}")
+    return "p_Anima(x) = " + " ".join(terms)
+
+
+def _ujicache_p_anima_x_update(profile: str):
+    return gr.update(value=_format_p_anima_x(profile))
 
 
 def _ujicache_prediction_control_updates(formula: str, slope_ema_smoothing: float):

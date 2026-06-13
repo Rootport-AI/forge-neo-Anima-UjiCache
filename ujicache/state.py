@@ -51,6 +51,28 @@ UJICACHE_COEFFICIENTS_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT = [
 ]
 
 
+def ujicache_coefficients_for_profile(profile: str) -> list[float]:
+    """Polynomial coefficients (descending powers) for a coefficient profile.
+
+    Single source of truth shared by the runtime skip decision and the read-only
+    p_Anima(x) UI display.
+    """
+    if profile == UJICACHE_PROFILE_IDENTITY:
+        return [1.0, 0.0]
+    return UJICACHE_COEFFICIENTS_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT
+
+
+def ujicache_modulated_source_for_profile(profile: str) -> str:
+    """Modulated source is derived from the coefficient profile, not chosen in the UI.
+
+    Identity estimate pairs with timestep_embedding; every other profile uses
+    first_block_shift. This is the single source of truth for that mapping.
+    """
+    if profile == UJICACHE_PROFILE_IDENTITY:
+        return UJICACHE_SOURCE_TIMESTEP_EMBEDDING
+    return UJICACHE_SOURCE_FIRST_BLOCK_SHIFT
+
+
 @dataclass
 class RuntimeState:
     enabled: bool = False
@@ -180,7 +202,6 @@ class RuntimeState:
         ujicache_slope_ema_smoothing: float = 0.0,
         ujicache_curve_ema_smoothing: float = 0.0,
         ujicache_cache_device: str = UJICACHE_CACHE_DEVICE_CUDA,
-        ujicache_modulated_source: str = UJICACHE_SOURCE_FIRST_BLOCK_SHIFT,
         ujicache_coefficient_profile: str = UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
         ujicache_max_skip_streak: int = 0,
         ujicache_force_full_interval: int = 0,
@@ -231,15 +252,13 @@ class RuntimeState:
             if ujicache_cache_device in UJICACHE_CACHE_DEVICES
             else UJICACHE_CACHE_DEVICE_CUDA
         )
-        self.ujicache_modulated_source = (
-            ujicache_modulated_source
-            if ujicache_modulated_source in UJICACHE_MODULATED_SOURCES
-            else UJICACHE_SOURCE_FIRST_BLOCK_SHIFT
-        )
         self.ujicache_coefficient_profile = (
             ujicache_coefficient_profile
             if ujicache_coefficient_profile in UJICACHE_COEFFICIENT_PROFILES
             else UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT
+        )
+        self.ujicache_modulated_source = ujicache_modulated_source_for_profile(
+            self.ujicache_coefficient_profile
         )
         self.ujicache_max_skip_streak = _clamp_int(ujicache_max_skip_streak, 0, 64)
         self.ujicache_force_full_interval = _clamp_int(ujicache_force_full_interval, 0, 64)
