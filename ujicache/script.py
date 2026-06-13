@@ -68,11 +68,8 @@ class Script(scripts.Script):
                 value=UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT,
                 elem_id="ujicache-coefficient-profile",
             )
-            p_anima_x = gr.Textbox(
-                label="p_Anima(x)",
+            p_anima_x = gr.Markdown(
                 value=_format_p_anima_x(UJICACHE_PROFILE_ANIMA_2B_30STEP_FIRST_BLOCK_SHIFT),
-                interactive=False,
-                max_lines=3,
                 elem_id="ujicache-p-anima-x",
             )
             ujicache_start_percent = gr.Slider(
@@ -788,13 +785,15 @@ def _superscript(power: int) -> str:
 def _format_p_anima_x(profile: str) -> str:
     """Render the active coefficient polynomial p_Anima(x) in descending powers.
 
-    Read-only display. Coefficients are shown at full precision (never rounded):
-    some profiles produce very small coefficients that would collapse to 0 if
-    rounded. Signs are operator-ized (A·x⁴ − B·x³ + …) for readability.
+    Read-only reference display, rendered as a single inline-code line in a
+    gr.Markdown component (not a text input) so it never looks editable.
+    Coefficients are shown at full precision (never rounded): some profiles
+    produce very small coefficients that would collapse to 0 if rounded. Signs
+    are operator-ized (A·x⁴ − B·x³ + …) for readability.
     """
     coefficients = ujicache_coefficients_for_profile(profile)
     if not coefficients:
-        return "p_Anima(x) = (no coefficients)"
+        return "`p_Anima(x) = (no coefficients)`"
     degree = len(coefficients) - 1
     terms: list[str] = []
     for index, coefficient in enumerate(coefficients):
@@ -808,7 +807,7 @@ def _format_p_anima_x(profile: str) -> str:
         else:
             operator = "−" if float(coefficient) < 0 else "+"
             terms.append(f"{operator} {term}")
-    return "p_Anima(x) = " + " ".join(terms)
+    return "`p_Anima(x) = " + " ".join(terms) + "`"
 
 
 def _ujicache_p_anima_x_update(profile: str):
