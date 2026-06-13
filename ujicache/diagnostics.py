@@ -184,6 +184,7 @@ def log_timing_summary() -> None:
             f"slope_ema_smoothing={STATE.ujicache_slope_ema_smoothing:.2f} "
             f"curve_ema_smoothing={STATE.ujicache_curve_ema_smoothing:.2f} "
             f"dry_run={STATE.ujicache_dry_run} "
+            f"capture_pairs={STATE.calibration_capture_records} "
             f"unavailable_reason={_fmt(STATE.ujicache_unavailable_reason)}"
         )
 def _should_warn_unsupported_model() -> bool:

@@ -233,6 +233,9 @@ def _ujicache_forward_body(
         cond_or_uncond,
     )
     should_calc = force_full_reason is not None or any(slot_should_calc.values())
+    if STATE.calibration_capture_active() and not should_calc:
+        should_calc = True
+        force_full_reason = "calibration_capture"
     if STATE.ujicache_dry_run and not should_calc:
         STATE.ujicache_dry_run_predictions += 1
         should_calc = True
@@ -271,6 +274,16 @@ def _ujicache_forward_body(
             start = slot_index * batch_per_slot
             end = (slot_index + 1) * batch_per_slot
             residual_slice = residual[start:end]
+            _capture_calibration_pair(
+                item,
+                int(key),
+                step_index,
+                rels.get(int(key)),
+                residual_slice,
+                timesteps_B_T,
+                start,
+                end,
+            )
             item["previous_residual"] = residual_slice
             _ujicache_record_residual(item, step_index, residual_slice)
             item["accumulated_rel_l1_distance"] = 0.0
@@ -453,6 +466,7 @@ def _ujicache_slot(cache: dict[str, Any], key: int) -> dict[str, Any]:
             "previous_velocity_time": None,
             "velocity_ema": None,
             "acceleration_ema": None,
+            "capture_prev_t": None,
         }
     return slots[key]
 
@@ -875,6 +889,67 @@ def _ujicache_validate_prediction(prediction: Any, previous: Any, target_slice: 
         return prediction.to(device=previous.device, dtype=previous.dtype)
     except Exception as exc:
         raise _UjiCachePredictionFallback("dtype_conversion") from exc
+
+
+def _capture_calibration_pair(
+    slot: dict[str, Any],
+    slot_key: int,
+    step_index: int,
+    rel_l1: float | None,
+    residual_slice: Any,
+    timesteps: Any,
+    start: int,
+    end: int,
+) -> None:
+    if not STATE.calibration_capture_active():
+        return
+    import math
+
+    from .calibration_capture import capture_pair
+
+    t_now = _capture_timestep_value(timesteps, start, end)
+    t_prev = slot.get("capture_prev_t")
+    out_rel: float | None = None
+    estimate: float | None = None
+    try:
+        if rel_l1 is not None and math.isfinite(float(rel_l1)):
+            candidate = _cache_poly1d(float(rel_l1), _ujicache_coefficients())
+            if math.isfinite(candidate):
+                estimate = candidate
+        previous = slot.get("previous_residual")
+        if previous is not None and rel_l1 is not None:
+            if getattr(previous, "shape", None) == getattr(residual_slice, "shape", None):
+                prev_f32 = previous.detach().float()
+                denom = prev_f32.abs().mean()
+                if float(denom.item()) > 0.0:
+                    out_tensor = (
+                        (residual_slice.detach().float() - prev_f32).abs().mean() / denom
+                    )
+                    value = float(out_tensor.item())
+                    if math.isfinite(value):
+                        out_rel = value
+    except Exception as exc:
+        STATE.calibration_capture_errors += 1
+        if STATE.ujicache_logged_calls < 12:
+            STATE.ujicache_logged_calls += 1
+            warning(f"calibration_capture_pair_failed reason={_short_error(exc)}")
+    finally:
+        slot["capture_prev_t"] = t_now
+    capture_pair(slot_key, step_index, rel_l1, out_rel, estimate, t_now, t_prev)
+
+
+def _capture_timestep_value(timesteps: Any, start: int, end: int) -> float | None:
+    try:
+        value = timesteps
+        if hasattr(value, "ndim") and getattr(value, "ndim", 0) >= 1:
+            sliced = value[start:end]
+            if hasattr(sliced, "numel") and sliced.numel() > 0:
+                value = sliced
+        if hasattr(value, "detach"):
+            return float(value.detach().flatten()[0].item())
+        return float(value)
+    except Exception:
+        return None
 
 
 def _dump_ujicache_residual(

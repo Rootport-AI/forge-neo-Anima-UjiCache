@@ -47,6 +47,7 @@ Removed from the public extension surface:
 - `ujicache/state.py`: settings snapshot and runtime counters.
 - `ujicache/patcher.py`: UjiCache monkey patch implementation and restore logic.
 - `ujicache/diagnostics.py`: console snapshots and summaries.
+- `ujicache/calibration_capture.py`: calibration-pair JSONL capture for coefficient re-fitting.
 - `ujicache/auto_ujicache.py`: Auto Uji CSV parsing and row application.
 - `docs/UjiCache-spec-v1.2.md`: UjiCache behavior and acceptance criteria.
 

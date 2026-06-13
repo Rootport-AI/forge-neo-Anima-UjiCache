@@ -79,6 +79,7 @@ class RuntimeState:
     ujicache_force_full_interval: int = 0
     ujicache_dry_run: bool = False
     ujicache_verbose_trace: bool = False
+    capture_calibration_pairs: bool = False
 
     auto_ujicache_enabled: bool = False
     auto_ujicache_csv: str = ""
@@ -125,6 +126,12 @@ class RuntimeState:
     tensor_dump_unavailable_reason: str | None = None
     tensor_dump_ujicache_local_call_index: int = 0
     tensor_dump_warned_reasons: set[str] = field(default_factory=set)
+
+    calibration_capture_path: str | None = None
+    calibration_capture_header_written: bool = False
+    calibration_capture_records: int = 0
+    calibration_capture_errors: int = 0
+    calibration_capture_warned_reasons: set[str] = field(default_factory=set)
 
     generation_logged: bool = False
     patches: dict[str, Any] = field(default_factory=dict)
@@ -181,6 +188,7 @@ class RuntimeState:
         ujicache_verbose_trace: bool = False,
         auto_ujicache_enabled: bool = False,
         auto_ujicache_csv: str = "",
+        capture_calibration_pairs: bool = False,
     ) -> None:
         self.enabled = bool(enabled)
         self.debug_log_enabled = bool(debug_log_enabled)
@@ -240,6 +248,7 @@ class RuntimeState:
 
         self.auto_ujicache_enabled = bool(auto_ujicache_enabled) and self.ujicache_enabled
         self.auto_ujicache_csv = str(auto_ujicache_csv or "")
+        self.capture_calibration_pairs = bool(capture_calibration_pairs)
 
     def active(self) -> bool:
         return (
@@ -249,7 +258,10 @@ class RuntimeState:
         )
 
     def tensor_dump_requested(self) -> bool:
-        return self.dump_ujicache_residual
+        return self.dump_ujicache_residual or self.capture_calibration_pairs
+
+    def calibration_capture_active(self) -> bool:
+        return self.enabled and self.debug_log_enabled and self.capture_calibration_pairs
 
     def tensor_dump_active(self) -> bool:
         return self.enabled and self.debug_log_enabled and self.tensor_dump_requested()
@@ -285,6 +297,11 @@ class RuntimeState:
         self.tensor_dump_unavailable_reason = None
         self.tensor_dump_ujicache_local_call_index = 0
         self.tensor_dump_warned_reasons.clear()
+        self.calibration_capture_path = None
+        self.calibration_capture_header_written = False
+        self.calibration_capture_records = 0
+        self.calibration_capture_errors = 0
+        self.calibration_capture_warned_reasons.clear()
         self.generation_logged = False
         self.error_message = None
 

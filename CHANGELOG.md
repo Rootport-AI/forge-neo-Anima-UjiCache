@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## Unreleased
+
+- Added: `Capture calibration pairs` (Debug log mode) — per-step (rel_l1, out_rel) JSONL capture with run conditions incl. Shift; forces full calculation on every model call.
+- Added: `Uji shift` / `Uji capture_pairs` infotext keys.
+
 ## 0.1.0
 
 - Split UjiCache out as an independent Forge Neo extension.

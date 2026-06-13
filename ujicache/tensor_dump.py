@@ -187,6 +187,7 @@ def _write_meta(run_dir: Path, p: Any) -> None:
         "cfg_scale": _safe_float(getattr(p, "cfg_scale", None)),
         "dump_flags": {
             "ujicache_residual": STATE.dump_ujicache_residual,
+            "capture_calibration_pairs": STATE.capture_calibration_pairs,
         },
     }
     (run_dir / "meta.json").write_text(

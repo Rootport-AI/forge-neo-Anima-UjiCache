@@ -199,6 +199,16 @@ class Script(scripts.Script):
                     value=False,
                     elem_id="ujicache-dump-residual",
                 )
+                capture_calibration_pairs = gr.Checkbox(
+                    label="Capture calibration pairs",
+                    value=False,
+                    info=(
+                        "Force full calculation on every step and write per-step "
+                        "(rel_l1, out_rel) pairs plus run conditions to "
+                        "calibration_pairs.jsonl in the debug run folder."
+                    ),
+                    elem_id="ujicache-capture-calibration-pairs",
+                )
                 gr.HTML(
                     '<div style="border-top: 3px solid var(--block-border-color, #4b5563); margin: 0.85rem 0 0.7rem;"></div>',
                     elem_id="ujicache-debug-dump-divider",
@@ -287,6 +297,7 @@ class Script(scripts.Script):
             ujicache_verbose_trace,
             auto_ujicache_enabled,
             auto_ujicache_csv,
+            capture_calibration_pairs,
         ]
 
     def before_process(self, p, *script_args):
@@ -331,6 +342,13 @@ class Script(scripts.Script):
             STATE.tensor_dump_errors += 1
             warning(f"tensor_dump_flush_failed reason={exc}")
             exception("tensor dump flush failed")
+        try:
+            from .calibration_capture import log_capture_summary
+
+            log_capture_summary()
+        except Exception as exc:
+            STATE.calibration_capture_errors += 1
+            warning(f"calibration_capture_summary_failed reason={exc}")
         _finish_auto_ujicache_run(p)
 
 
@@ -551,10 +569,22 @@ def _safe_int(value, default: int) -> int:
         return default
 
 
+_EXPECTED_UI_ARG_COUNT = 27
+_ui_arg_count_warned = False
+
+
 def _apply_ui_args(script_args) -> None:
-    if len(script_args) >= 26:
-        STATE.apply_options(*script_args[:26])
+    global _ui_arg_count_warned
+    if len(script_args) >= _EXPECTED_UI_ARG_COUNT:
+        STATE.apply_options(*script_args[:_EXPECTED_UI_ARG_COUNT])
         return
+    if script_args and not _ui_arg_count_warned:
+        _ui_arg_count_warned = True
+        warning(
+            "ui_args_unexpected "
+            f"count={len(script_args)} expected={_EXPECTED_UI_ARG_COUNT}; "
+            "falling back to shared settings"
+        )
     STATE.refresh_settings()
 
 
@@ -593,6 +623,14 @@ def _begin_generation(p, script_args, source: str) -> None:
         except Exception as exc:
             STATE.tensor_dump_errors += 1
             warning(f"tensor_dump_initialize_failed reason={exc}")
+        if STATE.calibration_capture_active():
+            try:
+                from .calibration_capture import initialize_for_generation
+
+                initialize_for_generation(p)
+            except Exception as exc:
+                STATE.calibration_capture_errors += 1
+                warning(f"calibration_capture_initialize_failed reason={exc}")
 
     _configure_generation_patches()
     _apply_infotext_metadata(p)
@@ -628,6 +666,11 @@ def _apply_infotext_metadata(p) -> None:
         params["Uji coefficient_profile"] = STATE.ujicache_coefficient_profile
         params["Uji max_skip_streak"] = STATE.ujicache_max_skip_streak
         params["Uji force_full_interval"] = STATE.ujicache_force_full_interval
+        shift_value = _model_sampling_shift()
+        if shift_value is not None:
+            params["Uji shift"] = f"{shift_value:.2f}"
+        if STATE.capture_calibration_pairs:
+            params["Uji capture_pairs"] = True
         if STATE.auto_ujicache_active and STATE.auto_ujicache_row_index is not None:
             if STATE.auto_ujicache_row_count > 0:
                 params["Uji auto_row_index"] = (
@@ -674,11 +717,20 @@ def _configure_generation_patches() -> None:
         STATE.tensor_dump_warned_reasons.add("ujicache_residual_requires_ujicache")
         warning("tensor_dump_ujicache_residual_inactive reason=ujicache_disabled")
 
+    if (
+        STATE.debug_log_enabled
+        and STATE.capture_calibration_pairs
+        and not STATE.ujicache_enabled
+        and "calibration_capture_requires_ujicache" not in STATE.calibration_capture_warned_reasons
+    ):
+        STATE.calibration_capture_warned_reasons.add("calibration_capture_requires_ujicache")
+        warning("calibration_capture_inactive reason=ujicache_disabled")
+
 
 def _tensor_dump_will_save() -> bool:
     return bool(
         STATE.tensor_dump_active()
-        and STATE.dump_ujicache_residual
+        and (STATE.dump_ujicache_residual or STATE.capture_calibration_pairs)
         and STATE.ujicache_enabled
     )
 
@@ -689,6 +741,19 @@ def _remove_generation_patches() -> None:
 
 def _requires_supported_model() -> bool:
     return STATE.ujicache_enabled
+
+
+def _model_sampling_shift() -> float | None:
+    try:
+        from modules import shared
+
+        from .forge_introspection import model_sampling_info
+
+        data = model_sampling_info(getattr(shared, "sd_model", None))
+        value = data.get("shift")
+        return None if value is None else float(value)
+    except Exception:
+        return None
 
 
 def _default_option(key: str, default):

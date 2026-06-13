@@ -190,3 +190,44 @@ def _diffusion_model(sd_model: Any) -> Any:
         return _safe_getattr(model, "diffusion_model")
     except Exception:
         return None
+
+
+def model_sampling_info(sd_model: Any) -> dict[str, Any]:
+    """Best-effort snapshot of the model sampling object (shift, sigma range).
+
+    The Shift label is informational; the per-pair `t_now` column in
+    calibration_pairs.jsonl is the ground truth for the timestep grid.
+    """
+    try:
+        forge_objects = _safe_getattr(sd_model, "forge_objects")
+        if isinstance(forge_objects, dict):
+            unet = forge_objects.get("unet")
+        else:
+            unet = _safe_getattr(forge_objects, "unet")
+        model = _safe_getattr(unet, "model")
+        model_sampling = _safe_getattr(model, "model_sampling")
+        if model_sampling is None:
+            model_sampling = _safe_getattr(model, "predictor")
+        if model_sampling is None:
+            return {"available": False}
+        return {
+            "available": True,
+            "class": type(model_sampling).__name__,
+            "shift": _safe_number(_safe_getattr(model_sampling, "shift")),
+            "multiplier": _safe_number(_safe_getattr(model_sampling, "multiplier")),
+            "sigma_min": _safe_number(_safe_getattr(model_sampling, "sigma_min")),
+            "sigma_max": _safe_number(_safe_getattr(model_sampling, "sigma_max")),
+        }
+    except Exception:
+        return {"available": False}
+
+
+def _safe_number(value: Any) -> float | None:
+    try:
+        if value is None:
+            return None
+        if hasattr(value, "detach"):
+            value = value.detach().flatten()[0].item()
+        return float(value)
+    except Exception:
+        return None

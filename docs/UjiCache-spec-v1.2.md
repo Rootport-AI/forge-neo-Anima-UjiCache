@@ -27,6 +27,7 @@ UjiCache
     Enable debug log mode
     Debug log
     Dump UjiCache residual
+    Capture calibration pairs
     Print timing log
     Verbose diagnose log
   Cache device
@@ -78,6 +79,20 @@ When UjiCache is enabled, PNG infotext receives `Uji ...` keys:
 - `Uji curve_ema_smoothing`
 - `Uji auto_row_index`
 - `Uji auto_row_name`
+- `Uji shift` (when the model sampling object exposes shift)
+- `Uji capture_pairs` (when `Capture calibration pairs` is on)
+
+## Capture calibration pairs (v1.3 addendum)
+
+`Capture calibration pairs` (Debug log mode) forces full calculation on every
+model call and writes `calibration_pairs.jsonl` into the debug run folder: one
+`type=run` header line with full generation conditions (including Shift and the
+active coefficient list) and one `type=pair` line per (model call x cond/uncond
+slot) carrying `rel_l1` (x), `out_rel` (y), `estimate`, `t_now`, `t_prev`. The
+schema is compatible with `daraskme/comfy_anima_tea_cache` so its
+`np.polyfit(rels, outs, deg=4)` step reuses Forge-captured data verbatim.
+Requires `Enable UjiCache` and `Enable debug log mode`; off by default and a
+no-op when off.
 
 ## Implementation Files
 
