@@ -7,9 +7,12 @@ from typing import Any
 
 from .state import (
     STATE,
+    UJICACHE_COEFFICIENT_PROFILES,
     UJICACHE_FORMULA_LINEAR,
     UJICACHE_FORMULA_TEACACHE,
     UJICACHE_FORMULA_TAYLOR2,
+    ujicache_modulated_source_for_profile,
+    ujicache_window_for_profile,
 )
 
 
@@ -31,6 +34,9 @@ class AutoUjiRow:
     use_prediction_after_progress: float | None = None
     max_skip_streak: int | None = None
     force_full_interval: int | None = None
+    coefficient_profile: str | None = None
+    start_percent: float | None = None
+    end_percent: float | None = None
 
 
 @dataclass
@@ -65,6 +71,9 @@ _SUPPORTED_COLUMNS = {
     "use_prediction_after_progress",
     "max_skip_streak",
     "force_full_interval",
+    "coefficient_profile",
+    "start_percent",
+    "end_percent",
 }
 
 
@@ -143,6 +152,20 @@ def parse_auto_ujicache_csv(text: str) -> AutoUjiParseResult:
                     line_number,
                     "force_full_interval",
                 ),
+                coefficient_profile=_parse_profile(
+                    values.get("coefficient_profile"),
+                    line_number,
+                ),
+                start_percent=_parse_float(
+                    values.get("start_percent"),
+                    line_number,
+                    "start_percent",
+                ),
+                end_percent=_parse_float(
+                    values.get("end_percent"),
+                    line_number,
+                    "end_percent",
+                ),
             )
         except AutoUjiCsvError:
             raise
@@ -212,6 +235,27 @@ def apply_auto_ujicache_row_to_state(row: AutoUjiRow) -> None:
             0,
             64,
         )
+    if row.coefficient_profile is not None:
+        STATE.ujicache_coefficient_profile = row.coefficient_profile
+        STATE.ujicache_modulated_source = ujicache_modulated_source_for_profile(
+            row.coefficient_profile
+        )
+    # Window resolution (start/end independent): an explicit row value wins;
+    # otherwise the selected profile's fit window applies; otherwise the current
+    # STATE value is left untouched.
+    profile_window = (
+        ujicache_window_for_profile(row.coefficient_profile)
+        if row.coefficient_profile is not None
+        else None
+    )
+    if row.start_percent is not None:
+        STATE.ujicache_start_percent = _clamp_float(row.start_percent, 0.0, 1.0)
+    elif profile_window is not None:
+        STATE.ujicache_start_percent = profile_window[0]
+    if row.end_percent is not None:
+        STATE.ujicache_end_percent = _clamp_float(row.end_percent, 0.0, 1.0)
+    elif profile_window is not None:
+        STATE.ujicache_end_percent = profile_window[1]
 
 
 def _row_values(header: list[str], cells: list[str]) -> dict[str, str | None]:
@@ -266,6 +310,17 @@ def _parse_formula(value: str | None, line: int) -> str | None:
             f"line={line} column=formula reason=unknown_formula value={value}"
         )
     return formula
+
+
+def _parse_profile(value: str | None, line: int) -> str | None:
+    if value is None:
+        return None
+    profile = str(value).strip()
+    if profile not in UJICACHE_COEFFICIENT_PROFILES:
+        raise AutoUjiCsvError(
+            f"line={line} column=coefficient_profile reason=unknown_profile value={value}"
+        )
+    return profile
 
 
 def _clamp_float(value: Any, minimum: float, maximum: float) -> float:
