@@ -10,6 +10,7 @@
 - Changed: UI reorder — `Coefficient profile` moved above `Start/End progress`; new read-only `p_Anima(x)` display of the active polynomial.
 - Changed: `Modulated source` removed from the UI; it is now derived from the Coefficient profile (Identity → timestep_embedding, otherwise first_block_shift) and still recorded in `Uji modulated_source`.
 - Changed: `Debug log mode` now defaults to OFF.
+- Added: Auto Uji mode CSV columns `coefficient_profile`, `start_percent`, `end_percent`. `coefficient_profile` requires an exact match against a registered profile (else `AutoUjiCsvError`); selecting one derives Modulated source and applies the profile's fit window unless an explicit start/end overrides it per side. A row may also sweep the window alone without a profile.
 - Added: Shift-mismatch warning — at generation start, UjiCache compares a calibrated preset's expected Shift (parsed from its name) against the model's effective shift and logs `ujicache_shift_mismatch` (once per session per pair) when they differ. A mismatch moves the coefficients off their fitted domain and distorts skip decisions; generation is not blocked.
 
 ## 0.1.0
